@@ -1,7 +1,7 @@
 import os
-from repository import DAO, URIManager
+from .repository import DAO, URIManager
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 # Basic Web Interface
@@ -84,7 +84,7 @@ class ItemPage(WebPage):
     
     def _layout_metadata(self, metadata):
         frag = "<h2>Metadata</h2>"
-        for key, vals in metadata.iteritems():
+        for key, vals in metadata.items():
             frag += "<strong>" + key + "</strong>: " + ", ".join(vals) + "<br/>"
         if len(metadata) == 0:
             frag += "No metadata associated with this item"

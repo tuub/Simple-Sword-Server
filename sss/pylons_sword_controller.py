@@ -3,10 +3,10 @@ from pylons.controllers.util import abort, redirect
 from pylons.controllers import WSGIController
 from pylons.templating import render_mako as render
 
-import re, base64, urllib, uuid, inspect
-from core import Auth, SwordError, AuthException, DepositRequest, DeleteRequest
-from negotiator import ContentNegotiator, AcceptParameters, ContentType
-from spec import Errors, HttpHeaders, ValidationException
+import re, base64, urllib.request, urllib.parse, urllib.error, uuid, inspect
+from .core import Auth, SwordError, AuthException, DepositRequest, DeleteRequest
+from .negotiator import ContentNegotiator, AcceptParameters, ContentType
+from .spec import Errors, HttpHeaders, ValidationException
 
 
 import logging
@@ -119,7 +119,7 @@ class SwordController(WSGIController):
         return
 
     def _map_webpy_headers(self, headers):
-        return dict([(c[0][5:].replace("_", "-") if c[0].startswith("HTTP_") else c[0].replace("_", "-"), c[1]) for c in headers.items()])
+        return dict([(c[0][5:].replace("_", "-") if c[0].startswith("HTTP_") else c[0].replace("_", "-"), c[1]) for c in list(headers.items())])
     
     def validate_delete_request(self, section):
         h = HttpHeaders()

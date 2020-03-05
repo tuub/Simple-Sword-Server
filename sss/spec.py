@@ -1,7 +1,7 @@
 # FIXME: this covers a lot of constants, so we should consider getting rid of
 # all these extraneous objects and just have dictionaries which can be imported
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 # FIXME: this is a poorly constructed object
@@ -187,7 +187,7 @@ class HttpHeaders(object):
     
     def is_allowed_value(self, header, value):
         header = header.lower()
-        if HttpHeaders.allowed_values.has_key(header):
+        if header in HttpHeaders.allowed_values:
             if value.lower() in HttpHeaders.allowed_values[header]:
                 return True
             else:
@@ -195,13 +195,13 @@ class HttpHeaders(object):
         return True
         
     def get_allowed_values(self, header):
-        if HttpHeaders.allowed_values.has_key(header):
+        if header in HttpHeaders.allowed_values:
             return HttpHeaders.allowed_values[header]
         return []
         
     def validate(self, header_dict, section):
         ssslog.info("Validating under requirements from SWORD spec section " + section)
-        normalised_dict = dict([(h.lower(), v) for h, v in header_dict.items()])
+        normalised_dict = dict([(h.lower(), v) for h, v in list(header_dict.items())])
         ssslog.debug("Normalised header dictionary: " + str(normalised_dict))
         spec_compliance = HttpHeaders.spec_compliance.get(section, [])
         for header, requirement in spec_compliance:
@@ -215,19 +215,19 @@ class HttpHeaders(object):
                 raise ValidationException(header + " MUST be supplied, but is missing or empty")
 
     def get_sword_headers(self, header_dict):
-        normalised_dict = dict([(h.lower(), v) for h, v in header_dict.items()])
+        normalised_dict = dict([(h.lower(), v) for h, v in list(header_dict.items())])
         headers = {}
-        for head, value in normalised_dict.items():
+        for head, value in list(normalised_dict.items()):
             # is it a sword header
-            if HttpHeaders.sword_headers.has_key(head):
+            if head in HttpHeaders.sword_headers:
                 headers[head] = value
-        for head, default in HttpHeaders.sword_headers.items():
-            if head not in headers.keys():
+        for head, default in list(HttpHeaders.sword_headers.items()):
+            if head not in list(headers.keys()):
                 headers[head] = default
         return headers
         
     def extract_filename(self, header_dict):
-        normalised_dict = dict([(h.lower(), v) for h, v in header_dict.items()])
+        normalised_dict = dict([(h.lower(), v) for h, v in list(header_dict.items())])
         """ get the filename out of the content disposition header """
         cd = normalised_dict.get(HttpHeaders.content_disposition)
         if cd is not None:

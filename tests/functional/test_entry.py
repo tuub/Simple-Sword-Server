@@ -71,7 +71,7 @@ class TestConnection(TestController):
         assert "http://state/2" in e.state_uris[1]
         assert e.updated is not None
         assert len(e.dc_metadata) == 3
-        assert "identifier" in e.dc_metadata.keys()
+        assert "identifier" in list(e.dc_metadata.keys())
         assert e.verbose_description == "Verbose Description"
         assert e.treatment == "Treatment"
         assert e.original_deposit_uri == "http://original/"
@@ -260,7 +260,7 @@ class TestConnection(TestController):
         assert "http://state/2" in e.state_uris[1]
         assert e.updated is not None
         assert len(e.dc_metadata) == 3
-        assert "identifier" in e.dc_metadata.keys()
+        assert "identifier" in list(e.dc_metadata.keys())
         assert e.verbose_description == "Verbose Description"
         assert e.treatment == "Treatment"
         assert e.original_deposit_uri == "http://original/"

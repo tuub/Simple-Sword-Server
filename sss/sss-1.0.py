@@ -4,7 +4,7 @@ __version__ = "2.0"
 __author__ = ["Richard Jones <richard@cottagelabs.com>"]
 __license__ = "bsd"
 
-import web, uuid, os, re, base64, hashlib, urllib, sys, logging, logging.config
+import web, uuid, os, re, base64, hashlib, urllib.request, urllib.parse, urllib.error, sys, logging, logging.config
 from lxml import etree
 from datetime import datetime
 from zipfile import ZipFile
@@ -368,18 +368,18 @@ class Collection(SwordHttpHandler):
 
         # created, accepted, or error
         if result.created:
-            print cfg.rid + " Item created"
+            print(cfg.rid + " Item created")
             web.header("Content-Type", "application/atom+xml;type=entry")
             web.header("Location", result.location)
             web.ctx.status = "201 Created"
             if cfg.return_deposit_receipt:
-                print cfg.rid + " Returning deposit receipt"
+                print(cfg.rid + " Returning deposit receipt")
                 return result.receipt
             else:
-                print cfg.rid + " Omitting deposit receipt"
+                print(cfg.rid + " Omitting deposit receipt")
                 return
         else:
-            print cfg.rid + " Returning Error"
+            print(cfg.rid + " Returning Error")
             web.header("Content-Type", "text/xml")
             web.ctx.status = result.error_code
             return result.error
@@ -1158,12 +1158,12 @@ class ContentNegotiator(object):
         """
         Get the Accept header out of the web.py HTTP dictionary.  Return None if no accept header exists
         """
-        if dict.has_key("HTTP_ACCEPT"):
+        if "HTTP_ACCEPT" in dict:
             return dict["HTTP_ACCEPT"]
         return None
 
     def get_packaging(self, dict):
-        if dict.has_key('HTTP_ACCEPT_PACKAGING'):
+        if 'HTTP_ACCEPT_PACKAGING' in dict:
             return dict['HTTP_ACCEPT_PACKAGING']
         return None
 
@@ -1267,7 +1267,7 @@ class ContentNegotiator(object):
         Utility method: if dict d contains key q, then append value v to the array which is identified by that key
         otherwise create a new key with the value of an array with a single value v
         """
-        if d.has_key(q):
+        if q in d:
             d[q].append(v)
         else:
             d[q] = [v]
@@ -1303,7 +1303,7 @@ class ContentNegotiator(object):
 
         # get the client requirement keys sorted with the highest q first (the server is a list which should be
         # in order of preference already)
-        ckeys = client.keys()
+        ckeys = list(client.keys())
         ckeys.sort(reverse=True)
 
         # the rule for determining what to return is that "the client's preference always wins", so we look for the
@@ -1571,7 +1571,7 @@ class SWORDSpec(object):
         webin = web.input()
         if len(webin) != 2 and len(webin) > 0:
             return "Multipart request does not contain exactly 2 parts"
-        if len(webin) >= 2 and not webin.has_key("atom") and not webin.has_key("payload"):
+        if len(webin) >= 2 and "atom" not in webin and "payload" not in webin:
             return "Multipart request must contain Content-Dispositions with names 'atom' and 'payload'"
         if len(webin) > 0 and not allow_multipart:
             return "Multipart request not permitted in this context"
@@ -1617,7 +1617,7 @@ class SWORDSpec(object):
         # supplied in the DepositRequest object's constructor
         ssslog.debug("Incoming HTTP headers: " + str(dict))
         empty_request = False
-        for head in dict.keys():
+        for head in list(dict.keys()):
             if head in self.sword_headers:
                 d.set_by_header(head, dict[head])
             if head == "HTTP_CONTENT_DISPOSITION":
@@ -1675,7 +1675,7 @@ class SWORDSpec(object):
         d = DeleteRequest()
 
         # we just want to parse out the headers that are relevant
-        for head in dict.keys():
+        for head in list(dict.keys()):
             if head in self.sword_headers:
                 d.set_by_header(head, dict[head])
 
@@ -2378,11 +2378,11 @@ class SWORDServer(object):
         # deposit receipt
         if metadata is None:
             metadata = {}
-        if not metadata.has_key("title"):
+        if "title" not in metadata:
             metadata["title"] = ["SWORD Deposit"]
-        if not metadata.has_key("creator"):
+        if "creator" not in metadata:
             metadata["creator"] = ["SWORD Client"]
-        if not metadata.has_key("abstract"):
+        if "abstract" not in metadata:
             metadata["abstract"] = ["Content deposited with SWORD client"]
 
         # Now assemble the deposit receipt
@@ -2419,7 +2419,7 @@ class SWORDServer(object):
         generator.set("version", "1.0")
 
         # now embed all the metadata as foreign markup
-        for field in metadata.keys():
+        for field in list(metadata.keys()):
             for v in metadata[field]:
                 fdc = etree.SubElement(entry, self.ns.DC + field)
                 fdc.text = v
@@ -2859,7 +2859,7 @@ class URIManager(object):
 
     def part_uri(self, collection, id, filename):
         """ The URL for accessing the parts of an object in the store """
-        return self.configuration.base_url + "part-uri/" + collection + "/" + id + "/" + urllib.quote(filename)
+        return self.configuration.base_url + "part-uri/" + collection + "/" + id + "/" + urllib.parse.quote(filename)
 
     def agg_uri(self, collection, id):
         return self.configuration.base_url + "agg-uri/" + collection + "/" + id
@@ -2899,7 +2899,7 @@ class DAO(object):
         self.configuration = global_configuration
 
         # first thing to do is create the store if it does not already exist
-        print self.configuration.store_dir
+        print(self.configuration.store_dir)
         if not os.path.exists(self.configuration.store_dir):
             os.makedirs(self.configuration.store_dir)
 
@@ -3011,7 +3011,7 @@ class DAO(object):
     def store_metadata(self, collection, id, metadata):
         """ Store the supplied metadata dictionary in the object idenfied by the id in the specified collection """
         md = etree.Element(self.ns.DC + "metadata", nsmap=self.mdmap)
-        for dct in metadata.keys():
+        for dct in list(metadata.keys()):
             for v in metadata[dct]:
                 element = etree.SubElement(md, self.ns.DC + dct)
                 element.text = v
@@ -3030,7 +3030,7 @@ class DAO(object):
             tag = dc.tag
             if tag.startswith(self.ns.DC):
                 tag = tag[len(self.ns.DC):]
-            if md.has_key(tag):
+            if tag in md:
                 md[tag].append(dc.text.strip())
             else:
                 md[tag] = [dc.text.strip()]
@@ -3266,7 +3266,7 @@ class SimpleZipIngester(IngestPackager):
 
         # now go through and retrieve the dcterms from the entry
         for element in entry.getchildren():
-            if not isinstance(element.tag, basestring):
+            if not isinstance(element.tag, str):
                 continue
                 
             # we operate an additive policy with metadata.  Duplicate
@@ -3281,7 +3281,7 @@ class SimpleZipIngester(IngestPackager):
         return derived_resources
         
     def a_insert(self, d, key, value):
-        if d.has_key(key):
+        if key in d:
             vs = d[key]
             if value not in vs:
                 d[key].append(value)
@@ -3332,7 +3332,7 @@ class DefaultEntryIngester(object):
 
         # now go through and retrieve the dcterms from the entry
         for element in entry.getchildren():
-            if not isinstance(element.tag, basestring):
+            if not isinstance(element.tag, str):
                 continue
                 
             # we operate an additive policy with metadata.  Duplicate
@@ -3347,7 +3347,7 @@ class DefaultEntryIngester(object):
         self.dao.store_metadata(collection, id, metadata)
 
     def a_insert(self, d, key, value):
-        if d.has_key(key):
+        if key in d:
             vs = d[key]
             if value not in vs:
                 d[key].append(value)
@@ -3433,7 +3433,7 @@ class ItemPage(WebPage):
     
     def _layout_metadata(self, metadata):
         frag = "<h2>Metadata</h2>"
-        for key, vals in metadata.iteritems():
+        for key, vals in metadata.items():
             frag += "<strong>" + key + "</strong>: " + ", ".join(vals) + "<br/>"
         if len(metadata) == 0:
             frag += "No metadata associated with this item"

@@ -1,14 +1,14 @@
-import web, re, base64, urllib, uuid, os
+import web, re, base64, urllib.request, urllib.parse, urllib.error, uuid, os
 from web.wsgiserver import CherryPyWSGIServer
-from core import Auth, SwordError, AuthException, DepositRequest, DeleteRequest
-from negotiator import ContentNegotiator, AcceptParameters, ContentType
-from spec import Errors, HttpHeaders, ValidationException
+from .core import Auth, SwordError, AuthException, DepositRequest, DeleteRequest
+from .negotiator import ContentNegotiator, AcceptParameters, ContentType
+from .spec import Errors, HttpHeaders, ValidationException
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 # create the global configuration and import the implementation classes
-from config import Configuration
+from .config import Configuration
 config = Configuration()
 Authenticator = config.get_authenticator_implementation()
 SwordServer = config.get_server_implementation()
@@ -153,7 +153,7 @@ class SwordHttpHandler(object):
         return ""
     
     def _map_webpy_headers(self, headers):
-        return dict([(c[0][5:].replace("_", "-") if c[0].startswith("HTTP_") else c[0].replace("_", "-"), c[1]) for c in headers.items()])
+        return dict([(c[0][5:].replace("_", "-") if c[0].startswith("HTTP_") else c[0].replace("_", "-"), c[1]) for c in list(headers.items())])
     
     def validate_delete_request(self, web, section):
         h = HttpHeaders()
@@ -181,7 +181,7 @@ class SwordHttpHandler(object):
             webin = web.input()
             if len(webin) != 2 and len(webin) > 0:
                 raise ValidationException("Multipart request does not contain exactly 2 parts")
-            if len(webin) >= 2 and not webin.has_key("atom") and not webin.has_key("payload"):
+            if len(webin) >= 2 and "atom" not in webin and "payload" not in webin:
                 raise ValidationException("Multipart request must contain Content-Dispositions with names 'atom' and 'payload'")
             if len(webin) > 0 and not allow_multipart:
                 raise ValidationException("Multipart request not permitted in this context")

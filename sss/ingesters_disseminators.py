@@ -1,8 +1,8 @@
 from zipfile import ZipFile
 from lxml import etree
-from spec import Namespaces
+from .spec import Namespaces
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 
@@ -157,7 +157,7 @@ class SimpleZipIngester(IngestPackager):
 
         # now go through and retrieve the dcterms from the entry
         for element in entry.getchildren():
-            if not isinstance(element.tag, basestring):
+            if not isinstance(element.tag, str):
                 continue
                 
             # we operate an additive policy with metadata.  Duplicate
@@ -172,7 +172,7 @@ class SimpleZipIngester(IngestPackager):
         return derived_resources
         
     def a_insert(self, d, key, value):
-        if d.has_key(key):
+        if key in d:
             vs = d[key]
             if value not in vs:
                 d[key].append(value)
@@ -224,7 +224,7 @@ class DefaultEntryIngester(object):
 
         # now go through and retrieve the dcterms from the entry
         for element in entry.getchildren():
-            if not isinstance(element.tag, basestring):
+            if not isinstance(element.tag, str):
                 continue
                 
             # we operate an additive policy with metadata.  Duplicate
@@ -239,7 +239,7 @@ class DefaultEntryIngester(object):
         self.dao.store_metadata(collection, id, metadata)
 
     def a_insert(self, d, key, value):
-        if d.has_key(key):
+        if key in d:
             vs = d[key]
             if value not in vs:
                 d[key].append(value)

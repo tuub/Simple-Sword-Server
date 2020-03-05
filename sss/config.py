@@ -1,9 +1,9 @@
 import os, uuid, sys, json
-from ingesters_disseminators import DefaultEntryIngester, DefaultDisseminator, FeedDisseminator, BinaryIngester, SimpleZipIngester, METSDSpaceIngester
-from negotiator import AcceptParameters, ContentType
-from core import SwordServer, Authenticator, WebUI
+from .ingesters_disseminators import DefaultEntryIngester, DefaultDisseminator, FeedDisseminator, BinaryIngester, SimpleZipIngester, METSDSpaceIngester
+from .negotiator import AcceptParameters, ContentType
+from .core import SwordServer, Authenticator, WebUI
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 SSS_CONFIG_FILE = "./sss.conf.json"
@@ -238,7 +238,7 @@ class Configuration(object):
         
     def _get_accept_params(self, obj):
         params = AcceptParameters()
-        for k, v in obj.items():
+        for k, v in list(obj.items()):
             if k == "content_type":
                 params.content_type = ContentType(v)
             elif k == "packaging":
@@ -315,8 +315,8 @@ if __name__ == "__main__":
     # if we are run from the command line, run validation over the
     # specified file
     if len(sys.argv) != 2:
-        print "Please supply a path to a file to validate"
+        print("Please supply a path to a file to validate")
         exit()
-    print "Validating Configuration File: " + sys.argv[1]
+    print("Validating Configuration File: " + sys.argv[1])
     c = Configuration(config_file=sys.argv[1])
-    print "File is valid"
+    print("File is valid")

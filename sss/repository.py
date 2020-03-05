@@ -1,13 +1,13 @@
-import os, hashlib, uuid, urllib
-from core import Statement, DepositResponse, MediaResourceResponse, DeleteResponse, Auth, AuthException, SwordError, ServiceDocument, SDCollection, EntryDocument, Authenticator, SwordServer, WebUI
-from spec import Namespaces, Errors
+import os, hashlib, uuid, urllib.request, urllib.parse, urllib.error
+from .core import Statement, DepositResponse, MediaResourceResponse, DeleteResponse, Auth, AuthException, SwordError, ServiceDocument, SDCollection, EntryDocument, Authenticator, SwordServer, WebUI
+from .spec import Namespaces, Errors
 from lxml import etree
 from datetime import datetime
 from zipfile import ZipFile
-from negotiator import AcceptParameters, ContentType
-from info import __version__
+from .negotiator import AcceptParameters, ContentType
+from .info import __version__
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 class WebInterface(WebUI):
@@ -112,7 +112,7 @@ class URIManager(object):
 
     def part_uri(self, collection, id, filename):
         """ The URL for accessing the parts of an object in the store """
-        return self.configuration.base_url + "part-uri/" + collection + "/" + id + "/" + urllib.quote(filename)
+        return self.configuration.base_url + "part-uri/" + collection + "/" + id + "/" + urllib.parse.quote(filename)
 
     def agg_uri(self, collection, id):
         return self.configuration.base_url + "agg-uri/" + collection + "/" + id
@@ -894,11 +894,11 @@ class SSS(SwordServer):
         # deposit receipt
         if metadata is None:
             metadata = {}
-        if not metadata.has_key("title"):
+        if "title" not in metadata:
             metadata["title"] = ["SWORD Deposit"]
-        if not metadata.has_key("creator"):
+        if "creator" not in metadata:
             metadata["creator"] = ["SWORD Client"]
-        if not metadata.has_key("abstract"):
+        if "abstract" not in metadata:
             metadata["abstract"] = ["Content deposited with SWORD client"]
 
         packaging = []
@@ -967,7 +967,7 @@ class DAO(object):
         self.configuration = config
 
         # first thing to do is create the store if it does not already exist
-        print self.configuration.store_dir
+        print(self.configuration.store_dir)
         if not os.path.exists(self.configuration.store_dir):
             os.makedirs(self.configuration.store_dir)
 
@@ -1079,7 +1079,7 @@ class DAO(object):
     def store_metadata(self, collection, id, metadata):
         """ Store the supplied metadata dictionary in the object idenfied by the id in the specified collection """
         md = etree.Element(self.ns.DC + "metadata", nsmap=self.mdmap)
-        for dct in metadata.keys():
+        for dct in list(metadata.keys()):
             for v in metadata[dct]:
                 element = etree.SubElement(md, self.ns.DC + dct)
                 element.text = v
@@ -1098,7 +1098,7 @@ class DAO(object):
             tag = dc.tag
             if tag.startswith(self.ns.DC):
                 tag = tag[len(self.ns.DC):]
-            if md.has_key(tag):
+            if tag in md:
                 md[tag].append(dc.text.strip())
             else:
                 md[tag] = [dc.text.strip()]
@@ -1266,7 +1266,7 @@ class ItemPage(WebPage):
     
     def _layout_metadata(self, metadata):
         frag = "<h2>Metadata</h2>"
-        for key, vals in metadata.iteritems():
+        for key, vals in metadata.items():
             frag += "<strong>" + key + "</strong>: " + ", ".join(vals) + "<br/>"
         if len(metadata) == 0:
             frag += "No metadata associated with this item"

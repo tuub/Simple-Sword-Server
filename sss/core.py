@@ -1,10 +1,10 @@
-import web, os, base64, uuid, StringIO
+import web, os, base64, uuid, io
 from lxml import etree
 from datetime import datetime
-from spec import Namespaces, HttpHeaders, Errors
-from info import __version__
+from .spec import Namespaces, HttpHeaders, Errors
+from .info import __version__
 
-from sss_logging import logging
+from .sss_logging import logging
 ssslog = logging.getLogger(__name__)
 
 class SwordServer(object):
@@ -217,7 +217,7 @@ class EntryDocument(object):
                     self.treatment = element.text.strip()
                 elif field.startswith("dcterms_") and element.text is not None:
                     field = field[8:] # get rid of the dcterms_ prefix
-                    if self.dc_metadata.has_key(field):
+                    if field in self.dc_metadata:
                         self.dc_metadata[field].append(element.text.strip())                        
                     else:
                         self.dc_metadata[field] = [element.text.strip()]
@@ -260,10 +260,10 @@ class EntryDocument(object):
                     
             # Put all links into .links attribute, with all element attribs
             attribs = {}
-            for k,v in e.attrib.iteritems():
+            for k,v in e.attrib.items():
                 if k != "rel":
                     attribs[k] = v
-            if self.links.has_key(rel): 
+            if rel in self.links: 
                 self.links[rel].append(attribs)
             else:
                 self.links[rel] = [attribs]
@@ -272,7 +272,7 @@ class EntryDocument(object):
     def _handle_content(self, e):
         """Method to intepret the <atom:content> elements."""
         # eg <content type="application/zip" src="http://swordapp.org/cont-IRI/43/my_deposit"/>
-        if e.attrib.has_key("src"):
+        if "src" in e.attrib:
             src = e.attrib['src']
             info = dict(e.attrib).copy()
             del info['src']
@@ -313,7 +313,7 @@ class EntryDocument(object):
         gen.set("version", version)
 
         # now embed all the metadata as foreign markup
-        for field in self.dc_metadata.keys():
+        for field in list(self.dc_metadata.keys()):
             # ensure it's a list (common mistake)
             if not isinstance(self.dc_metadata[field], list):
                 self.dc_metadata[field] = [self.dc_metadata[field]]
@@ -444,7 +444,7 @@ class ServiceDocument(object):
             mus.text = str(self.max_upload_size)
 
         # workspace element
-        for ws in self.workspaces.keys():
+        for ws in list(self.workspaces.keys()):
             workspace = etree.SubElement(service, self.ns.APP + "workspace")
 
             # title element
@@ -594,7 +594,7 @@ class SWORDRequest(object):
         self.content_length = 0
 
     def set_from_headers(self, headers):
-        for key, value in headers.items():
+        for key, value in list(headers.items()):
             if value is not None:
                 if key == HttpHeaders.on_behalf_of:
                     self.on_behalf_of = value
@@ -681,7 +681,7 @@ class DepositRequest(SWORDRequest):
     @property
     def content_file(self):
         if self._content_file is None and self._content is not None:
-            self._content_file = StringIO.StringIO(self._content)
+            self._content_file = io.StringIO(self._content)
         return self._content_file
     
     @content_file.setter
